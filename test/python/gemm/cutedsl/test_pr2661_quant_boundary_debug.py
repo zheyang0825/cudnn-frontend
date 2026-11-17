@@ -9,6 +9,7 @@ from gemm.cutedsl.test_grouped_gemm_glu import (
 
 
 @pytest.mark.parametrize("seed", range(32))
+@pytest.mark.L0
 def test_powlu_mxfp8_seed_sweep(request, seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
