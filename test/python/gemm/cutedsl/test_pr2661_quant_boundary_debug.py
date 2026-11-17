@@ -56,7 +56,7 @@ def test_powlu_mxfp8_seed4_strict(request):
     )
 
 
-@pytest.mark.parametrize("seed", range(64))
+@pytest.mark.parametrize("seed", range(512))
 @pytest.mark.L0
 def test_swiglu_mxfp8_seed_sweep(request, seed):
     torch.manual_seed(seed)
