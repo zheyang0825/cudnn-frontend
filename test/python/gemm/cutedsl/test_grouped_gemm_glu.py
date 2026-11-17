@@ -699,6 +699,8 @@ def _test_grouped_gemm_glu_dense_wrapper(
     situ_beta2=25.0,
     power_m=2.0,
     skip_reference=False,
+    quant_atol=None,
+    quant_rtol=None,
 ):
     try:
         from cudnn import grouped_gemm_glu_wrapper_sm100
@@ -788,7 +790,14 @@ def _test_grouped_gemm_glu_dense_wrapper(
         pytest.skip(f"Unsupported testcase: {e}")
 
     if not skip_reference:
-        check_ref_grouped_gemm_swiglu(inputs, outputs, cfg, skip_ref=cfg["skip_ref"])
+        check_ref_grouped_gemm_swiglu(
+            inputs,
+            outputs,
+            cfg,
+            quant_atol=quant_atol,
+            quant_rtol=quant_rtol,
+            skip_ref=cfg["skip_ref"],
+        )
     return inputs, outputs, cfg
 
 
@@ -834,6 +843,11 @@ def test_grouped_gemm_glu_dense_wrapper_powlu_mxfp8(request):
         request=request,
         act_func="powlu",
         power_m=2.5,
+        # The exact PyTorch reference and fast PowLU can straddle an E4M3
+        # midpoint after small tensor-core GEMM accumulation differences.
+        # Accept one adjacent FP8 bin without relaxing C or scale checks.
+        quant_atol=0.25,
+        quant_rtol=0.125,
     )
 
 

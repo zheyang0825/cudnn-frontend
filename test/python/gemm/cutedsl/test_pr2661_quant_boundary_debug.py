@@ -31,6 +31,8 @@ def test_powlu_mxfp8_seed_sweep(request, seed):
         request=request,
         act_func="powlu",
         power_m=2.5,
+        quant_atol=0.25,
+        quant_rtol=0.125,
     )
 
 

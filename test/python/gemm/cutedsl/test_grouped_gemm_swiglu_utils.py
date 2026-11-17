@@ -762,6 +762,8 @@ def check_ref_grouped_gemm_swiglu(
     cfg: Dict[str, Any],
     atol: float = 1e-1,
     rtol: float = 1e-2,
+    quant_atol: Optional[float] = None,
+    quant_rtol: Optional[float] = None,
     skip_ref: bool = False,
 ) -> None:
     """Check grouped GEMM SwiGLU result against reference.
@@ -776,6 +778,9 @@ def check_ref_grouped_gemm_swiglu(
     if skip_ref:
         print("Skipping reference check")
         return
+
+    quant_atol = atol if quant_atol is None else quant_atol
+    quant_rtol = rtol if quant_rtol is None else quant_rtol
 
     # Run reference
     ref_tensors = run_grouped_gemm_swiglu_ref(
@@ -847,8 +852,8 @@ def check_ref_grouped_gemm_swiglu(
             torch.testing.assert_close(
                 d_gpu.cpu().float(),
                 d_ref.to(cfg["d_dtype"]).to(torch.float32).cpu(),
-                atol=atol,
-                rtol=rtol,
+                atol=quant_atol,
+                rtol=quant_rtol,
             )
 
             # sfd_col
@@ -898,8 +903,8 @@ def check_ref_grouped_gemm_swiglu(
             torch.testing.assert_close(
                 d_col_gpu.cpu().float(),
                 d_col_ref.to(cfg["d_dtype"]).to(torch.float32).cpu(),
-                atol=atol,
-                rtol=rtol,
+                atol=quant_atol,
+                rtol=quant_rtol,
             )
         else:
             # Note: This is outside support surface
