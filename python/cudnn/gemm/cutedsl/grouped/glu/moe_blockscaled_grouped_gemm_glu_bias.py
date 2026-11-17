@@ -61,6 +61,7 @@ from ..moe_kernel_helpers import (
     warp_amax_with_nan,
     epilog_gmem_copy_and_partition,
 )
+from .powlu_math import nv_powf_f32
 
 """
 High-performance persistent blockscaled contiguous grouped dense GEMM (D = alpha * (SFA * A) * (SFB * B)) example for the NVIDIA Blackwell architecture
@@ -1574,7 +1575,7 @@ class BlockScaledMoEGroupedGemmGluBiasKernel:
             safe_gate = cutlass.Float32(cutlass.select_(positive, fmax(gate, min_normal, nan=False), one))
             sqrt_gate = cute.math.sqrt(safe_gate, fastmath=True)
             exponent = power_m * cute.arch.rcp_approx(one + sqrt_gate)
-            power = cute.math.pow(safe_gate, exponent, fastmath=False)
+            power = nv_powf_f32(safe_gate, exponent)
             sigmoid = sigmoid_f32(gate, fastmath=True)
             base = cutlass.Float32(cutlass.select_(positive, power, gate))
             value = base * sigmoid * acc_vec_up[i]
