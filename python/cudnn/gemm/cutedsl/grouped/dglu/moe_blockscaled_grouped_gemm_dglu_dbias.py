@@ -1887,7 +1887,6 @@ class BlockScaledMoEGroupedGemmDgluDbiasKernel:
         """Backward for the power-adaptive GLU epilogue."""
         one = cutlass.Float32(1.0)
         two = cutlass.Float32(2.0)
-        ln_two = cutlass.Float32(0.6931471805599453)
         power_m = cutlass.Float32(self.power_m)
         min_normal = cutlass.Float32(2.0**-126)
         dgate_vec = cute.make_rmem_tensor(acc_vec.shape, cutlass.Float32)
@@ -1904,12 +1903,10 @@ class BlockScaledMoEGroupedGemmDgluDbiasKernel:
             sqrt_gate = cute.math.sqrt(safe_gate, fastmath=False)
             denominator = one + sqrt_gate
             exponent = power_m / denominator
-            # Share one approximate log2 between x**e, x**(e-1), and ln(x).
             # Computing x**e / x is not equivalent near zero because x**e may underflow first.
-            log2_gate = cute.math.log2(safe_gate, fastmath=False)
-            power = cute.math.exp2(exponent * log2_gate, fastmath=False)
-            term_a_power = cute.math.exp2((exponent - one) * log2_gate, fastmath=False)
-            log_gate = log2_gate * ln_two
+            power = cute.math.pow(safe_gate, exponent, fastmath=False)
+            term_a_power = cute.math.pow(safe_gate, exponent - one, fastmath=False)
+            log_gate = cute.math.log(safe_gate, fastmath=False)
             sigmoid = one / (one + cute.math.exp(-gate, fastmath=False))
             # Do not derive this as 1 - sigmoid: cancellation loses the small tail for large positive gates.
             sigmoid_neg = one / (one + cute.math.exp(gate, fastmath=False))
