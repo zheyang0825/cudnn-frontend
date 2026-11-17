@@ -1572,10 +1572,10 @@ class BlockScaledMoEGroupedGemmGluBiasKernel:
             gate = acc_vec_gate[i]
             positive = gate > cutlass.Float32(0.0)
             safe_gate = cutlass.Float32(cutlass.select_(positive, fmax(gate, min_normal, nan=False), one))
-            sqrt_gate = cute.math.sqrt(safe_gate, fastmath=True)
+            sqrt_gate = cute.math.sqrt(safe_gate, fastmath=False)
             exponent = power_m / (one + sqrt_gate)
-            power = cute.math.pow(safe_gate, exponent, fastmath=True)
-            sigmoid = one / (one + cute.math.exp(-gate, fastmath=True))
+            power = cute.math.pow(safe_gate, exponent, fastmath=False)
+            sigmoid = one / (one + cute.math.exp(-gate, fastmath=False))
             base = cutlass.Float32(cutlass.select_(positive, power, gate))
             value = base * sigmoid * acc_vec_up[i]
             if cutlass.const_expr(self.has_prob):

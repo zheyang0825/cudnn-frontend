@@ -1901,24 +1901,24 @@ class BlockScaledMoEGroupedGemmDgluDbiasKernel:
             # Keep positive subnormals away from sqrt/log/division FTZ hazards without imposing a coarse activation floor.
             # The non-positive branch uses one so both sides of the select remain numerically valid.
             safe_gate = cutlass.Float32(cutlass.select_(positive, fmax(gate, min_normal, nan=False), one))
-            sqrt_gate = cute.math.sqrt(safe_gate, fastmath=True)
+            sqrt_gate = cute.math.sqrt(safe_gate, fastmath=False)
             denominator = one + sqrt_gate
-            exponent = power_m * cute.arch.rcp_approx(denominator)
+            exponent = power_m / denominator
             # Share one approximate log2 between x**e, x**(e-1), and ln(x).
             # Computing x**e / x is not equivalent near zero because x**e may underflow first.
-            log2_gate = cute.math.log2(safe_gate, fastmath=True)
-            power = cute.math.exp2(exponent * log2_gate, fastmath=True)
-            term_a_power = cute.math.exp2((exponent - one) * log2_gate, fastmath=True)
+            log2_gate = cute.math.log2(safe_gate, fastmath=False)
+            power = cute.math.exp2(exponent * log2_gate, fastmath=False)
+            term_a_power = cute.math.exp2((exponent - one) * log2_gate, fastmath=False)
             log_gate = log2_gate * ln_two
-            sigmoid = sigmoid_f32(gate, fastmath=True)
+            sigmoid = one / (one + cute.math.exp(-gate, fastmath=False))
             # Do not derive this as 1 - sigmoid: cancellation loses the small tail for large positive gates.
-            sigmoid_neg = sigmoid_f32(-gate, fastmath=True)
+            sigmoid_neg = one / (one + cute.math.exp(gate, fastmath=False))
             positive_value = power * sigmoid
             negative_value = gate * sigmoid
             value = cutlass.Float32(cutlass.select_(positive, positive_value, negative_value))
 
             # Three-term derivative avoids the unstable power * (exponent / gate) formulation near zero.
-            exponent_grad = -power_m * cute.arch.rcp_approx(two * sqrt_gate * denominator * denominator)
+            exponent_grad = -power_m / (two * sqrt_gate * denominator * denominator)
             term_a = term_a_power * exponent * sigmoid
             term_b = positive_value * exponent_grad * log_gate
             term_c = positive_value * sigmoid_neg
