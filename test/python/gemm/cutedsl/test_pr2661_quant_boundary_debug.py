@@ -36,6 +36,28 @@ def test_powlu_mxfp8_seed_sweep(request, seed):
     )
 
 
+@pytest.mark.L0
+def test_powlu_mxfp8_seed4_strict(request):
+    torch.manual_seed(4)
+    torch.cuda.manual_seed_all(4)
+    _test_grouped_gemm_glu_dense_wrapper(
+        ab_dtype=torch.float8_e4m3fn,
+        c_dtype=torch.bfloat16,
+        d_dtype=torch.float8_e4m3fn,
+        cd_major="n",
+        acc_dtype=torch.float32,
+        mma_tiler_mn=(256, 256),
+        cluster_shape_mn=(2, 1),
+        sf_vec_size=32,
+        sf_dtype=torch.float8_e8m0fnu,
+        vector_f32=False,
+        discrete_col_sfd=False,
+        request=request,
+        act_func="powlu",
+        power_m=2.5,
+    )
+
+
 @pytest.mark.parametrize("seed", range(64))
 @pytest.mark.L0
 def test_swiglu_mxfp8_seed_sweep(request, seed):
