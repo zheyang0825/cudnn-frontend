@@ -847,7 +847,9 @@ def _ordered_e4m3_codes(tensor):
 
 
 def _assert_adjacent_e4m3(actual, reference, *, max_mismatch_ratio=1e-5):
+    assert actual.dtype == torch.float8_e4m3fn
     expected = reference.to(actual.dtype)
+    assert actual.shape == expected.shape
     actual_f32 = actual.float()
     expected_f32 = expected.float()
     assert torch.isfinite(actual_f32).all()
